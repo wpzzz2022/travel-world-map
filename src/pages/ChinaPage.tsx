@@ -24,7 +24,16 @@ export default function ChinaPage() {
   const [filter, setFilter] = useState<"all" | DestStatus | "none">("all");
   const [search, setSearch] = useState("");
   const [adding, setAdding] = useState(false);
+  /** 地图上隐藏没去过的城市，只看点亮（去过/想去）的 */
+  const [onlyLit, setOnlyLit] = useState(false);
+  /** 下方城市列表折叠 */
+  const [listOpen, setListOpen] = useState(true);
+  /** 省界 GeoJSON 是否已加载完 */
+  const [provReady, setProvReady] = useState(false);
   const mapElRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const provGeoRef = useRef<any>(null);
 
   const dests = data.countries.CN?.destinations ?? [];
   const cityCodes = useMemo(() => new Set(CN_CITIES.map((c) => c.code)), []);
@@ -38,7 +47,26 @@ export default function ChinaPage() {
   const visited = CN_CITIES.filter((c) => statusByCode.get(c.code) === "visited").length;
   const dream = CN_CITIES.filter((c) => statusByCode.get(c.code) === "dream").length;
 
-  // 地图：高德底图 + 省界 + 城市状态点（DataV 的中心点是 GCJ-02，和高德瓦片同网格，直接对齐）
+  /** 省份的点亮状态：有去过的市=visited，否则有想去的市=dream，否则没点亮 */
+  const provStatus = (province: string): CityStatus => {
+    let s: CityStatus = "none";
+    for (const c of CN_CITIES) {
+      if (c.province !== province) continue;
+      const st = statusByCode.get(c.code) ?? "none";
+      if (st === "visited") return "visited";
+      if (st === "dream") s = "dream";
+    }
+    return s;
+  };
+
+  const provStyle = (province: string) => {
+    const s = provStatus(province);
+    if (s === "visited") return { color: "#2e8b6a", weight: 1.2, fillColor: "#2e8b6a", fillOpacity: 0.22 };
+    if (s === "dream") return { color: "#c08a24", weight: 1, fillColor: "#d99a2b", fillOpacity: 0.16 };
+    return { color: "#8aa08c", weight: 0.8, fillColor: "#ffffff", fillOpacity: 0.12 };
+  };
+
+  // 地图初始化（只做一次）：高德底图，悬停启用滚轮缩放
   useEffect(() => {
     if (!mapElRef.current) return;
     const map = L.map(mapElRef.current, { scrollWheelZoom: false, attributionControl: false });
@@ -47,21 +75,38 @@ export default function ChinaPage() {
     map.on("mouseout", () => map.scrollWheelZoom.disable());
     L.tileLayer(AMAP_TILE, { subdomains: ["1", "2", "3", "4"], maxZoom: 18 }).addTo(map);
     L.control.attribution({ prefix: false }).addAttribution("&copy; 高德地图 &copy; DataV.GeoAtlas").addTo(map);
-
-    let cancelled = false;
+    mapRef.current = map;
+    map.fitBounds([
+      [17.5, 73.5],
+      [53.8, 135.2],
+    ]);
+    const t = window.setTimeout(() => map.invalidateSize(), 80);
+    // 预取省界数据，标记/省份着色变化时复用
     fetch(`${import.meta.env.BASE_URL}geo/china-provinces.json`)
       .then((r) => r.json())
       .then((geo) => {
-        if (cancelled) return;
-        L.geoJSON(geo, {
-          style: { color: "#8aa08c", weight: 0.8, fillColor: "#ffffff", fillOpacity: 0.16 },
-          interactive: false,
-        }).addTo(map);
+        provGeoRef.current = geo;
+        setProvReady(true);
       })
       .catch(() => undefined);
+    return () => {
+      window.clearTimeout(t);
+      mapRef.current = null;
+      map.remove();
+    };
+  }, []);
 
+  // 省份着色 + 城市点：随点亮筛选和城市状态变化重画
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !provReady) return;
+    const group = L.layerGroup().addTo(map);
+    if (provGeoRef.current) {
+      L.geoJSON(provGeoRef.current, { style: (f) => provStyle(f?.properties?.name), interactive: false }).addTo(group);
+    }
     for (const city of CN_CITIES) {
       const status = statusByCode.get(city.code) ?? "none";
+      if (onlyLit && status === "none") continue;
       const style = STATUS_COLOR[status];
       L.circleMarker([city.center[1], city.center[0]], {
         radius: status === "none" ? 4 : 6,
@@ -70,23 +115,15 @@ export default function ChinaPage() {
         fillColor: style.fill,
         fillOpacity: 0.95,
       })
-        .addTo(map)
+        .addTo(group)
         .bindTooltip(`<b>${city.name}</b> · ${style.label}`, { direction: "top", offset: [0, -4] })
         .on("click", () => navigate(`/country/CN/dest/${city.code}`));
     }
-
-    map.fitBounds([
-      [17.5, 73.5],
-      [53.8, 135.2],
-    ]);
-    const t = window.setTimeout(() => map.invalidateSize(), 80);
     return () => {
-      cancelled = true;
-      window.clearTimeout(t);
-      map.remove();
+      map.removeLayer(group);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [onlyLit, statusByCode, provReady]);
 
   const submitCustom = (input: { name: string; status: DestStatus; summary: string; coords: [number, number] | null }) => {
     mutate((d) => {
@@ -147,7 +184,14 @@ export default function ChinaPage() {
               {STATUS_COLOR[s].label}
             </span>
           ))}
-          <span className="map-legend-coords">悬停后滚轮缩放 · 点城市看景点</span>
+          <button
+            type="button"
+            className={`china-toggle${onlyLit ? " china-toggle-on" : ""}`}
+            onClick={() => setOnlyLit((v) => !v)}
+            title="隐藏地图上还没去的城市点"
+          >
+            {onlyLit ? "☀ 显示全部" : "只看点亮"}
+          </button>
         </div>
       </section>
 
@@ -178,7 +222,18 @@ export default function ChinaPage() {
       )}
 
       <section className="section">
-        <h2 className="display section-title">城市</h2>
+        <h2 className="display section-title">
+          <button type="button" className="section-collapse" onClick={() => setListOpen((v) => !v)} aria-expanded={listOpen}>
+            <i className="section-collapse-arrow" aria-hidden="true">{listOpen ? "▾" : "▸"}</i>
+            城市
+          </button>
+          <span className="section-count">
+            去过 {visited} · 想去 {dream} · 还没去 {CN_CITIES.length - visited - dream}
+          </span>
+        </h2>
+
+        {listOpen && (
+          <>
         <div className="china-filter">
           {(
             [
@@ -235,6 +290,8 @@ export default function ChinaPage() {
               </div>
             </div>
           ))
+        )}
+          </>
         )}
       </section>
 

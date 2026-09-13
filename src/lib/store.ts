@@ -33,6 +33,14 @@ export interface DataContextValue {
   mutate: (fn: (draft: TravelData) => void) => void;
   /** 整体替换数据（导入 / 重置用） */
   replaceData: (data: TravelData) => void;
+  /** 当前登录用户；null = 未登录（数据只存在本机浏览器） */
+  session: string | null;
+  /** 同步后端是否可达（本地 npm run dev 没起 Worker 时为 false） */
+  apiAvailable: boolean;
+  /** 登录成功后调用：拉取/合并服务器数据，之后的修改自动同步 */
+  setSessionUser: (username: string) => void;
+  /** 退出登录（服务器会话作废，本机数据保留） */
+  logout: () => void;
 }
 
 export const DataContext = createContext<DataContextValue | null>(null);

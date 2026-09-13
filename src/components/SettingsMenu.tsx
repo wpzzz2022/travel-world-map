@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
+import LoginModal from "./LoginModal";
 import Modal from "./Modal";
 import { exportJson, parseImported, useData } from "../lib/store";
 
-/** 右上角：主导航（地球仪 / 旅行计划）+ 数据菜单（导出 / 导入 / 重置）+ 使用说明 */
+/** 右上角：主导航（地图 / 行程 / 冒险）+ 登录态 + 数据菜单（导出 / 导入 / 重置） */
 export default function SettingsMenu() {
-  const { data, replaceData } = useData();
+  const { data, replaceData, session, apiAvailable, setSessionUser, logout } = useData();
   const [open, setOpen] = useState(false);
   const [help, setHelp] = useState(false);
+  const [login, setLogin] = useState(false);
   const [error, setError] = useState("");
   const menuRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -41,12 +43,28 @@ export default function SettingsMenu() {
           🌍 地图
         </NavLink>
         <NavLink to="/plans" className={({ isActive }) => `topnav-link ${isActive ? "topnav-active" : ""}`}>
-          🧳 旅行计划
+          🧳 行程
         </NavLink>
         <NavLink to="/adventures" className={({ isActive }) => `topnav-link ${isActive ? "topnav-active" : ""}`}>
           🧭 冒险
         </NavLink>
       </nav>
+      {session ? (
+        <div className="userchip">
+          <span className="userchip-name" title={`已登录：${session}，修改会自动同步到服务器`}>
+            👤 {session}
+          </span>
+          <button type="button" className="btn btn-quiet" onClick={logout} title="退出登录（本机数据保留）">
+            退出
+          </button>
+        </div>
+      ) : (
+        apiAvailable && (
+          <button type="button" className="btn" onClick={() => setLogin(true)} title="登录后记录同步到服务器，换设备不丢">
+            登录
+          </button>
+        )
+      )}
       <div className="settings" ref={menuRef}>
         <button type="button" className="btn btn-quiet" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
           数据
@@ -96,6 +114,15 @@ export default function SettingsMenu() {
           onChange={(e) => void importFile(e.target.files?.[0])}
         />
       </div>
+      {login && (
+        <LoginModal
+          onLoggedIn={(username) => {
+            setLogin(false);
+            setSessionUser(username);
+          }}
+          onClose={() => setLogin(false)}
+        />
+      )}
       {help && (
         <Modal title="使用说明" onClose={() => setHelp(false)} wide>
           <div className="help">

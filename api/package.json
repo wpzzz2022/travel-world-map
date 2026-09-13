@@ -1,0 +1,12 @@
+{
+  "name": "travel-map-api",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "cd .. && npm run build && cd api && wrangler deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260911.1",
+    "wrangler": "^4.40.0"
+  }
+}

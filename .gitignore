@@ -6,3 +6,5 @@ dist
 *.log 
 .wrangler 
 .vercel
+api/.dev.vars
+node_modules

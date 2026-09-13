@@ -71,30 +71,43 @@ docker compose up -d
 
 如果服务器上已经有别的 nginx/caddy 在管 443，就不用这套：在宿主机的反代里加一条 `travel.example.com → 127.0.0.1:8080` 即可。
 
-## 阶段二：数据同步（未来要「多设备/双人共享」时再加）
+## 阶段二：多用户 + 数据同步（已实现，`api/` 目录）
 
-现在换设备靠「导出 JSON → 导入」。如果之后想要云同步，加一个**几十行的轻量后端**就够，不用上数据库：
+数据同步后端做成了一个 **Cloudflare Worker**：同一个 Worker 既托管静态站（dist 构建产物），又提供 `/api/*` 接口。功能：
 
+- **注册 / 登录**：用户名 + 密码（PBKDF2 存储），注册需要邀请码（防陌生人）。会话用 HttpOnly Cookie，30 天有效。
+- **每个账号独立一份数据**：存 Cloudflare KV（键 `data:<用户名>`），不同人登录看到各自的内容。
+- **前端自动同步**：登录后，本机修改会在停顿 1.2 秒后自动推送到服务器（关页面/隐藏前也会补推）；换设备登录自动拉取，两边都有数据时弹窗选择"用服务器的"还是"把本机的推上去"。
+- 本机相册的**文件夹句柄和照片仍在各自电脑上**，不上服务器；同步的是文字数据 + 手动小图（base64 在 JSON 里）。
+
+### 部署步骤（5 分钟）
+
+```bash
+# 0. 登录 Cloudflare（首次会开浏览器授权）
+cd api && npx wrangler login
+
+# 1. 创建 KV 存储，把输出的 id 填到 api/wrangler.jsonc 的 kv_namespaces[0].id
+npx wrangler kv namespace create MEDIA
+
+# 2. 设置注册邀请码（换成你们自己的口令；不设置则注册关闭）
+npx wrangler secret put REGISTER_CODE
+
+# 3. 构建前端 + 部署（会把同名旧 Worker 替换成"静态站 + API"完整版）
+npm run deploy        # = 根目录 npm run build，然后 wrangler deploy
 ```
-                     ┌────────────────────────── 服务器 ────────────────────────┐
- 浏览器 ── HTTPS ──▶ │  Caddy                                                   │
-                     │    /        → travel-map（nginx 静态站）                  │
-                     │    /api/*   → travel-map-api（Node 容器）                 │
-                     │                 GET  /api/data?token=…   拉取最新 JSON    │
-                     │                 PUT  /api/data           推送整份 JSON    │
-                     │                 GET  /api/version     当前版本号/时间戳   │
-                     │                 （数据就是一份 JSON，落盘在 volume）      │
-                     │  volume: api-data → /data/travel.json                    │
-                     └──────────────────────────────────────────────────────────┘
-```
 
-设计要点（等实现时照着做）：
+访问 `https://travel-world-map.<你的子域>.workers.dev`，注册账号，开始用。
 
-- **整文档同步**：前端数据模型本来就是一份 `TravelData` JSON，直接 PUT 整份、带 `updatedAt` 做乐观锁（版本号不一致时提示先拉取），不用做字段级合并。
-- **鉴权**：两个人的私人站点，一个共享 `SYNC_TOKEN` 环境变量 + 请求头校验即可，不需要账号系统。
-- **备份**：`api-data` volume 就是全部状态，`docker run --rm -v api-data:/data -v $PWD:/backup alpine cp /data/travel.json /backup/` 一行备份。
-- compose 文件里已经留好注释掉的 `api` 服务块，实现后取消注释 `docker compose up -d` 即可。
-- 本机相册的**文件夹句柄**（IndexedDB）始终留在各人浏览器里，不进后端——照片文件不上服务器，只有文字数据和手动小图会同步。
+### 日常
+
+- 更新网站：改完代码 → `npm run deploy`
+- 备份：`npx wrangler kv key get --binding=KV "data:用户名" > backup.json`
+- 本地调试：`npm run dev`（5173，无后端，不显示登录）+ `cd api && npx wrangler dev`（8787，完整后端，创建 `api/.dev.vars` 写一行 `REGISTER_CODE=dev-code`）
+- 费用：免费额度（KV 每天 10 万读 / 1000 写）对两个人的量绰绰有余。
+
+### 自己服务器的等价方案
+
+如果不想用 Cloudflare：`docker-compose.yml` 里注释掉的 `api` 服务按同一套接口（`/api/register|login|logout|me|data`）用 Node/Express + JSON 文件实现一份即可，前端零改动。
 
 ## 相册存储怎么选（网盘联动 / MinIO / 本机相册）
 
