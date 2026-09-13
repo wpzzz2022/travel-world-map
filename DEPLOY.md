@@ -2,7 +2,7 @@
 
 本项目现阶段是**纯前端应用**：构建产物是静态文件，用户数据（旅行内容、照片链接、文件夹句柄）都存在**每个人自己的浏览器**里（localStorage + IndexedDB）。所以第一阶段的部署非常轻：一个 nginx 容器就够了；文件里也预留了第二阶段「数据同步后端」的位置。
 
-## 阶段一：纯静态部署（当前可用）
+## 阶段一：静态部署（容器版已含同步后端）
 
 ```
                      ┌────────────────────────── 服务器 ──────────────────────────┐
@@ -14,13 +14,14 @@
                      │    /            → index.html（不缓存）                      │
                      │    /assets/*    → 构建产物（永久缓存）                      │
                      │    /geo/*       → 中国省界 GeoJSON（按天缓存）              │
+                     │    /api/*       → 反代给 travel-map-api 容器                │
+                     │         （注册/登录/数据同步，JSON 落盘 api-data 卷）        │
                      │                                                            │
-                     │  数据：只在两人各自的浏览器 localStorage/IndexedDB 里        │
                      └────────────────────────────────────────────────────────────┘
 ```
 
-- 资源占用：nginx:alpine 运行时约 10~20MB 内存，最低配 1 核 512MB 的小机器都绰绰有余。
-- 服务器本身**无状态**：删容器重建不丢任何数据；备份 = 两人各自在页面里「导出全部数据 JSON」。
+- 资源占用：两个容器合计约 50MB 内存，最低配 1 核 512MB 的小机器绰绰有余。
+- 服务器上的状态 = `api-data` volume 一个 JSON 文件，备份见下文「自己服务器的等价方案」。
 
 ### 部署步骤
 
@@ -105,9 +106,17 @@ npm run deploy        # = 根目录 npm run build，然后 wrangler deploy
 - 本地调试：`npm run dev`（5173，无后端，不显示登录）+ `cd api && npx wrangler dev`（8787，完整后端，创建 `api/.dev.vars` 写一行 `REGISTER_CODE=dev-code`）
 - 费用：免费额度（KV 每天 10 万读 / 1000 写）对两个人的量绰绰有余。
 
-### 自己服务器的等价方案
+### 自己服务器的等价方案（已实现）
 
-如果不想用 Cloudflare：`docker-compose.yml` 里注释掉的 `api` 服务按同一套接口（`/api/register|login|logout|me|data`）用 Node/Express + JSON 文件实现一份即可，前端零改动。
+`docker-compose.yml` 现在默认包含两个容器：**web**（nginx 静态站）+ **api**（`api-server/`，零依赖 Node 后端，接口与 Cloudflare Worker 版完全一致，数据落在 `api-data` volume 的 JSON 文件里），nginx 把 `/api/*` 反代给 api。也就是说 Docker 部署同样支持注册登录和多用户同步：
+
+```bash
+docker compose up -d --build
+# 注册邀请码默认 travel-together，换成自己的：
+REGISTER_CODE=你们的口令 docker compose up -d --build
+# 备份全部账号数据：
+docker run --rm -v travel_api-data:/data -v $PWD:/backup alpine cp /data/travel-db.json /backup/
+```
 
 ## 相册存储怎么选（网盘联动 / MinIO / 本机相册）
 

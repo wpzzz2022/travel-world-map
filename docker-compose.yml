@@ -1,10 +1,11 @@
 # 旅行地图 —— 服务器部署
-# 阶段一（现在）：纯静态站，单容器 nginx；数据在各人浏览器里（localStorage / IndexedDB）。
-# 阶段二（未来）：打开注释里的 api 服务做数据同步，详见 DEPLOY.md。
+# web：nginx 托管前端静态站
+# api：登录 + 多用户数据同步后端（JSON 文件存 volume），前端通过 nginx 的 /api 反代访问
 #
 # 启动： docker compose up -d --build
 # 更新： git pull && docker compose up -d --build
-# 访问： http://<服务器IP>:8080   （HTTPS 反代见 DEPLOY.md）
+# 访问： http://<服务器IP>:8080
+# 注册邀请码：默认 travel-together，建议用环境变量覆盖（见下方 REGISTER_CODE）
 
 services:
   web:
@@ -14,22 +15,22 @@ services:
     ports:
       - "8080:80"
     restart: unless-stopped
+    depends_on:
+      - api
 
-  # ---- 阶段二（可选）：轻量数据同步后端，实现后再启用 ----
-  # api:
-  #   build: ./api
-  #   container_name: travel-map-api
-  #   restart: unless-stopped
-  #   environment:
-  #     - SYNC_TOKEN=换成一段只有你们俩知道的口令
-  #   volumes:
-  #     - api-data:/data        # 用户的 JSON 数据存这里，记得把 volume 加入备份
-  #
-  # volumes:
-  #   api-data:
+  api:
+    build: ./api-server
+    image: travel-map-api:latest
+    container_name: travel-map-api
+    restart: unless-stopped
+    environment:
+      # 部署时换成你们自己的口令：REGISTER_CODE=你们的邀请码 docker compose up -d --build
+      - REGISTER_CODE=${REGISTER_CODE:-travel-together}
+    volumes:
+      - api-data:/data
 
-# ---- 可选：用 Caddy 自动申请 HTTPS 证书（推荐，本机相册功能在服务器上必须 HTTPS）----
-# 放一个 Caddyfile（内容见 DEPLOY.md），然后取消注释：
+  # ---- 可选：用 Caddy 自动申请 HTTPS 证书（推荐，本机相册功能在服务器上必须 HTTPS）----
+  # 放一个 Caddyfile（内容见 DEPLOY.md），然后取消注释：
   # caddy:
   #   image: caddy:2-alpine
   #   container_name: travel-map-caddy
@@ -47,3 +48,7 @@ services:
   # volumes:
   #   caddy-data:
   #   caddy-config:
+
+volumes:
+  api-data:
+
