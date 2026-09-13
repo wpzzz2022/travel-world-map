@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "countries": {
+    "JP": {
+      "destinations": [
+        {
+          "id": "dest-tokyo",
+          "name": "东京",
+          "status": "visited",
+          "summary": "第一次一起出国。浅草的和服、涩谷的夜景，都想再来一遍。",
+          "coords": [139.6917, 35.6895],
+          "spots": [
+            {
+              "id": "spot-sensoji",
+              "name": "浅草寺",
+              "description": "东京最古老的寺庙，雷门的大红灯笼几乎是整个东京的封面。建议早上八点前到，人少、光也好；仲见世大街两边的小吃店会陆续开门，人形烧和现烤仙贝值得一试。穿和服在寺前拍照是经典玩法，附近有很多和服租赁店，提前网上预约更便宜。",
+              "coords": [139.7981, 35.7148],
+              "checkins": [
+                {
+                  "id": "ck-kaminarimon",
+                  "name": "雷门",
+                  "description": "大红灯笼正面是经典机位，斜对角拍可以把灯笼和塔都收进来。",
+                  "coords": [139.7981, 35.7118],
+                  "photos": [
+                    { "url": "./sample/photo-1.svg", "caption": "示例图片：替换成小红书笔记里保存的照片" }
+                  ]
+                },
+                {
+                  "id": "ck-hozomon",
+                  "name": "宝藏门 · 五重塔",
+                  "description": "穿过雷门一直走就是宝藏门，侧面能同时拍到五重塔。",
+                  "coords": [139.7967, 35.7147],
+                  "photos": []
+                }
+              ],
+              "posts": [
+                {
+                  "id": "post-sensoji-1",
+                  "url": "https://www.xiaohongshu.com/explore/示例帖子id",
+                  "title": "东京浅草寺一日游 · 和服拍照机位整理",
+                  "author": "示例笔记",
+                  "images": [{ "url": "./sample/photo-1.svg", "caption": "笔记封面（示例）" }],
+                  "note": "把小红书分享链接贴进来，图片存到 public/xhs/ 后在这里引用。"
+                }
+              ],
+              "photos": []
+            },
+            {
+              "id": "spot-shibuya-sky",
+              "name": "SHIBUYA SKY 展望台",
+              "description": "涩谷上空 229 米的露天展望台，日落前一小时上去，一次拍到白天、晚霞和夜景三种涩谷。门票建议提前两周在官网买，日落时段最抢手。",
+              "coords": [139.7016, 35.658],
+              "checkins": [
+                {
+                  "id": "ck-shibuya-corner",
+                  "name": "玻璃角落",
+                  "description": "最有名的悬空玻璃角落，排队拍照大概 20 分钟。",
+                  "coords": [139.7016, 35.658],
+                  "photos": []
+                }
+              ],
+              "posts": [],
+              "photos": []
+            }
+          ]
+        },
+        {
+          "id": "dest-kyoto",
+          "name": "京都",
+          "status": "dream",
+          "summary": "想去伏见稻荷看千本鸟居，秋天去最好。",
+          "coords": [135.7681, 35.0116],
+          "spots": [
+            {
+              "id": "spot-fushimi",
+              "name": "伏见稻荷大社",
+              "description": "千本鸟居从山脚一直排到山顶，全程走完要两三个小时。想拍空无一人的鸟居，要么一大早七点前到，要么直接爬到四辻展望台以上。",
+              "coords": [134.9671, 34.9671],
+              "checkins": [
+                {
+                  "id": "ck-senbon",
+                  "name": "千本鸟居",
+                  "description": "经典机位在鸟居开始分叉的路段，竖构图最好看。",
+                  "coords": [134.9645, 34.9675],
+                  "photos": []
+                }
+              ],
+              "posts": [],
+              "photos": []
+            }
+          ]
+        }
+      ]
+    },
+    "FR": {
+      "destinations": [
+        {
+          "id": "dest-paris",
+          "name": "巴黎",
+          "status": "dream",
+          "summary": "博物馆、可颂和塞纳河，把路线交给小红书收藏夹。",
+          "coords": [2.3522, 48.8566],
+          "spots": [
+            {
+              "id": "spot-louvre",
+              "name": "卢浮宫",
+              "description": "世界参观人数最多的博物馆，一天根本看不完，进门先奔三件镇馆之宝（《蒙娜丽莎》《断臂维纳斯》《胜利女神》），剩下的按翼慢慢逛。周三、周五开到晚上，闭馆前两小时人最少。",
+              "coords": [2.3376, 48.8606],
+              "checkins": [
+                {
+                  "id": "ck-pyramid",
+                  "name": "贝聿铭玻璃金字塔",
+                  "description": "白天排队拍正面，晚上灯亮了更好看，水池边倒影机位人最少。",
+                  "coords": [2.3355, 48.861],
+                  "photos": [
+                    { "url": "./sample/photo-2.svg", "caption": "示例图片：替换成小红书笔记里保存的照片" }
+                  ]
+                }
+              ],
+              "posts": [
+                {
+                  "id": "post-louvre-1",
+                  "url": "https://www.xiaohongshu.com/explore/示例帖子id",
+                  "title": "卢浮宫不排队攻略 + 必看展品路线",
+                  "author": "示例笔记",
+                  "images": [{ "url": "./sample/photo-2.svg" }],
+                  "note": ""
+                }
+              ],
+              "photos": []
+            },
+            {
+              "id": "spot-eiffel",
+              "name": "埃菲尔铁塔",
+              "description": "不用登塔，塔对岸的夏乐宫平台是全景机位；晚上整点后前五分钟有闪灯，记得提前占位。",
+              "coords": [2.2945, 48.8584],
+              "checkins": [
+                {
+                  "id": "ck-trocadero",
+                  "name": "夏乐宫平台",
+                  "description": "隔塞纳河正对铁塔，日出和蓝调时刻都出片。",
+                  "coords": [2.289, 48.862],
+                  "photos": []
+                },
+                {
+                  "id": "ck-champdemars",
+                  "name": "战神广场",
+                  "description": "在塔脚下野餐，傍晚带着酒和面包坐到闪灯开始。",
+                  "coords": [2.2983, 48.8562],
+                  "photos": []
+                }
+              ],
+              "posts": [],
+              "photos": []
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "trips": [
+    {
+      "id": "trip-japan-autumn",
+      "title": "日本关东关西秋日七日",
+      "status": "planning",
+      "legs": [
+        {
+          "id": "leg-tokyo",
+          "title": "东京",
+          "country": "JP",
+          "destId": "dest-tokyo",
+          "days": 4,
+          "note": "浅草半天，涩谷留到傍晚看 SHIBUYA SKY 的日落"
+        },
+        {
+          "id": "leg-kyoto",
+          "title": "京都",
+          "country": "JP",
+          "destId": "dest-kyoto",
+          "days": 3,
+          "note": "伏见稻荷赶七点前到，千本鸟居才拍得到空景"
+        }
+      ],
+      "createdAt": "2026-09-13T00:00:00.000Z"
+    }
+  ],
+  "adventures": [
+    {
+      "id": "adv-tokyo-2025",
+      "title": "东京·第一次一起出国",
+      "country": "JP",
+      "destId": "dest-tokyo",
+      "dateStart": "2025-10-02",
+      "dateEnd": "2025-10-06",
+      "rating": 5,
+      "note": "浅草的和服、涩谷的夜景都想再来一遍。详情页里点「关联本机相册文件夹」，选你电脑里放照片的那个文件夹，照片和视频就会在这里浏览（示例图片可以删掉）。",
+      "photos": [
+        { "url": "./sample/photo-1.svg", "caption": "雷门（示例图片，可删除）" },
+        { "url": "./sample/test-video.mp4", "caption": "示例视频：点开就能播（可删除）", "video": true }
+      ]
+    }
+  ]
+}
